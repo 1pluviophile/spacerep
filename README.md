@@ -155,11 +155,16 @@ deck.export_statistics("econ305_performance.csv")
 
 ## Research Findings (Preliminary)
 
-*Note: Update this section as you collect data*
+*Data collection in progress. This section will be updated with statistical analysis after 90 days of use.*
 
-- **Observation 1**: Mathematical derivations require shorter initial intervals than conceptual questions
-- **Observation 2**: [Your findings here]
-- **Observation 3**: [Your findings here]
+**Research questions under investigation:**
+- Do optimal review intervals differ by content type (concept vs. procedure vs. fact vs. application)?
+- Can we predict optimal intervals based on content difficulty and performance consistency?
+- What retention rate maximizes learning efficiency (retention per unit time)?
+
+**Initial hypothesis:**
+- Mathematical derivations and procedural knowledge may benefit from shorter, more frequent intervals compared to conceptual understanding, which may allow for longer spacing while maintaining high retention.
+
 
 ## Personal Use Case
 
@@ -186,8 +191,8 @@ This system is currently being used to support:
 
 ### Graduate Research Potential
 This project could extend into:
-- Master's thesis on educational technology and learning optimization
-- PhD research in computational models of memory and learning
+- Scientific thesis on educational technology and learning optimization
+- Self-motivated research in computational models of memory and learning
 - Applications to online education platforms
 - Interdisciplinary work combining economics, CS, and cognitive science
 
@@ -220,7 +225,7 @@ MIT License - See LICENSE file for details
 ### Key Papers
 1. Wozniak, P. A., & Gorzelanczyk, E. J. (1994). "Optimization of repetition spacing in the practice of learning"
 2. Settles, B., & Meeder, B. (2016). "A trainable spaced repetition model for language learning"
-3. [Add more relevant papers]
+3. *(Additional references to be added as research progresses)*
 
 ### Related Projects
 - Anki: https://apps.ankiweb.net/
@@ -231,7 +236,7 @@ MIT License - See LICENSE file for details
 **Author**: Hannah  
 **Institution**: Simon Fraser University  
 **Program**: Economics Major (Math & CS concentration)  
-**Email**: [Your academic email if you want to share]
+**Email**: [yinnhannah@gmail.com]
 
 ---
 
