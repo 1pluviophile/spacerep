@@ -170,7 +170,8 @@ deck.export_statistics("econ305_performance.csv")
 
 This system is currently being used to support:
 - **ECON 305** (Intermediate Macroeconomics): Solow model, growth theory, mathematical derivations
-- **Math courses**: Calculus, partial derivatives, optimization
+- **ECON 233**: Statistical inference that commenly used in economic data analysis
+- **Math courses**: limits, integral, sequences, multivariable calculus, linea algebra
 - **Computer Science**: Algorithms, data structures, complexity analysis
 
 **Retention goals**: Maintain 90%+ accuracy for core concepts, optimize review time to <30 min/day
