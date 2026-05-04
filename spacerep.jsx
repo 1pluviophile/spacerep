@@ -507,6 +507,7 @@ export default function App() {
   const [githubToken, setGithubToken] = useState("");
   const [gistId, setGistId] = useState("");
   const [githubSyncing, setGithubSyncing] = useState(false);
+  const [showToken, setShowToken] = useState(false);
   const fileInputRef = useRef(null);
   const backupFileRef = useRef(null);
 
@@ -823,7 +824,7 @@ export default function App() {
     if (!gistId.trim()) { showToast("❌ Enter a Gist ID first"); return; }
     setGithubSyncing(true);
     try {
-      const headers = githubToken ? { Authorization: `token ${githubToken}` } : {};
+      const headers = githubToken ? { Authorization: `Bearer ${githubToken}` } : {};
       const res = await fetch(`https://api.github.com/gists/${gistId.trim()}`, { headers });
       if (!res.ok) throw new Error(`GitHub ${res.status}`);
       const data = await res.json();
@@ -854,13 +855,13 @@ export default function App() {
         const cards = sharedCards[d] || [];
         if (cards.length > 0) files[`${d}.json`] = { content: JSON.stringify(cards, null, 2) };
       }
-      if (Object.keys(files).length === 0) { showToast("No shared cards to push"); setGithubSyncing(false); return; }
+      if (Object.keys(files).length === 0) { showToast("❌ No shared cards to push"); setGithubSyncing(false); return; }
       const body = { description: "SpaceRep shared flashcard decks", public: false, files };
       const url = gistId.trim() ? `https://api.github.com/gists/${gistId.trim()}` : "https://api.github.com/gists";
       const method = gistId.trim() ? "PATCH" : "POST";
       const res = await fetch(url, {
         method,
-        headers: { Authorization: `token ${githubToken.trim()}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${githubToken.trim()}`, "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
       if (!res.ok) throw new Error(`GitHub ${res.status}`);
@@ -1245,13 +1246,16 @@ export default function App() {
               <h3 style={{ margin: "0 0 4px", fontSize: 15, color: "#8b949e" }}>🐙 GitHub Gist Store</h3>
               <p style={{ color: t2, fontSize: 12, margin: "0 0 12px" }}>Sync shared decks to a GitHub Gist for cross-device access and sharing. Token needs <code style={{ background: sf2, padding: "1px 4px", borderRadius: 3 }}>gist</code> scope.</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-                <input
-                  value={githubToken}
-                  onChange={e => setGithubToken(e.target.value)}
-                  placeholder="GitHub Personal Access Token (gist scope)"
-                  type="password"
-                  style={{ background: sf2, color: t1, border: `1px solid ${bd}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none" }}
-                />
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input
+                    value={githubToken}
+                    onChange={e => setGithubToken(e.target.value)}
+                    placeholder="GitHub Personal Access Token (gist scope)"
+                    type={showToken ? "text" : "password"}
+                    style={{ flex: 1, background: sf2, color: t1, border: `1px solid ${bd}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none", fontFamily: "monospace" }}
+                  />
+                  <button onClick={() => setShowToken(v => !v)} style={{ ...btnS(sf2), border: `1px solid ${bd}`, color: t2, padding: "8px 10px", fontSize: 13 }}>{showToken ? "🙈" : "👁️"}</button>
+                </div>
                 <input
                   value={gistId}
                   onChange={e => setGistId(e.target.value)}
@@ -1267,9 +1271,9 @@ export default function App() {
                   {githubSyncing ? "⏳ Syncing…" : "⬆️ Push to Gist"}
                 </button>
               </div>
-              {gistId && (
+              {/^[0-9a-f]+$/i.test(gistId.trim()) && (
                 <div style={{ fontSize: 11, color: t2 }}>
-                  Gist: <a href={`https://gist.github.com/${gistId}`} target="_blank" rel="noopener noreferrer" style={{ color: ac }}>{gistId}</a>
+                  Gist: <a href={`https://gist.github.com/${gistId.trim()}`} target="_blank" rel="noopener noreferrer" style={{ color: ac }}>{gistId.trim()}</a>
                 </div>
               )}
             </div>
