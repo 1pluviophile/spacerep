@@ -1,3 +1,6 @@
+v1.1.0
+- 🐙 GitHub Gist Store — enter a GitHub Personal Access Token (gist scope) and an optional Gist ID in the Export tab to push/pull shared decks to/from a GitHub Gist. Leave the Gist ID blank on first push to create a new one automatically. Share the Gist ID with friends so they can pull your shared decks (read-only, no token needed). Token is stored locally and never leaves your device.
+
 v1.0.0
 - 🧠 SM-2 spaced repetition (same algorithm as Anki)
 - 📚 3 course decks — ECON 233, ECON 305, MATH 232 (+ custom decks)
