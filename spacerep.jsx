@@ -1242,41 +1242,46 @@ export default function App() {
             </div>
 
             {/* GITHUB GIST STORE */}
-            <div style={{ ...crd, marginBottom: 16, borderColor: "#30363d" }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, color: "#8b949e" }}>🐙 GitHub Gist Store</h3>
-              <p style={{ color: t2, fontSize: 12, margin: "0 0 12px" }}>Sync shared decks to a GitHub Gist for cross-device access and sharing. Token needs <code style={{ background: sf2, padding: "1px 4px", borderRadius: 3 }}>gist</code> scope.</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <input
-                    value={githubToken}
-                    onChange={e => setGithubToken(e.target.value)}
-                    placeholder="GitHub Personal Access Token (gist scope)"
-                    type={showToken ? "text" : "password"}
-                    style={{ flex: 1, background: sf2, color: t1, border: `1px solid ${bd}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none", fontFamily: "monospace" }}
-                  />
-                  <button onClick={() => setShowToken(v => !v)} style={{ ...btnS(sf2), border: `1px solid ${bd}`, color: t2, padding: "8px 10px", fontSize: 13 }}>{showToken ? "🙈" : "👁️"}</button>
+            {(() => {
+              const safeGistId = /^[0-9a-f]{32}$/i.test(gistId.trim()) ? gistId.trim() : "";
+              return (
+                <div style={{ ...crd, marginBottom: 16, borderColor: "#30363d" }}>
+                  <h3 style={{ margin: "0 0 4px", fontSize: 15, color: "#8b949e" }}>🐙 GitHub Gist Store</h3>
+                  <p style={{ color: t2, fontSize: 12, margin: "0 0 12px" }}>Sync shared decks to a GitHub Gist. Token (gist scope) is required to push; pull from a public Gist works without one.</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <input
+                        value={githubToken}
+                        onChange={e => setGithubToken(e.target.value)}
+                        placeholder="GitHub Personal Access Token (gist scope)"
+                        type={showToken ? "text" : "password"}
+                        style={{ flex: 1, background: sf2, color: t1, border: `1px solid ${bd}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none", fontFamily: "monospace" }}
+                      />
+                      <button onClick={() => setShowToken(v => !v)} style={{ ...btnS(sf2), border: `1px solid ${bd}`, color: t2, padding: "8px 10px", fontSize: 13 }}>{showToken ? "🙈" : "👁️"}</button>
+                    </div>
+                    <input
+                      value={gistId}
+                      onChange={e => setGistId(e.target.value)}
+                      placeholder="Gist ID (leave blank to create new on push)"
+                      style={{ background: sf2, color: t1, border: `1px solid ${bd}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none", fontFamily: "monospace" }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: safeGistId ? 10 : 0 }}>
+                    <button onClick={pullFromGist} disabled={githubSyncing || !gistId.trim()} style={{ ...btnS("#1f6feb"), opacity: githubSyncing || !gistId.trim() ? 0.5 : 1 }}>
+                      {githubSyncing ? "⏳ Syncing…" : "⬇️ Pull from Gist"}
+                    </button>
+                    <button onClick={pushToGist} disabled={githubSyncing || !githubToken.trim()} style={{ ...btnS("#238636"), opacity: githubSyncing || !githubToken.trim() ? 0.5 : 1 }}>
+                      {githubSyncing ? "⏳ Syncing…" : "⬆️ Push to Gist"}
+                    </button>
+                  </div>
+                  {safeGistId && (
+                    <div style={{ fontSize: 11, color: t2 }}>
+                      Gist: <a href={`https://gist.github.com/${safeGistId}`} target="_blank" rel="noopener noreferrer" style={{ color: ac }}>{safeGistId}</a>
+                    </div>
+                  )}
                 </div>
-                <input
-                  value={gistId}
-                  onChange={e => setGistId(e.target.value)}
-                  placeholder="Gist ID (leave blank to create new on push)"
-                  style={{ background: sf2, color: t1, border: `1px solid ${bd}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none", fontFamily: "monospace" }}
-                />
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: gistId ? 10 : 0 }}>
-                <button onClick={pullFromGist} disabled={githubSyncing || !gistId.trim()} style={{ ...btnS("#1f6feb"), opacity: githubSyncing || !gistId.trim() ? 0.5 : 1 }}>
-                  {githubSyncing ? "⏳ Syncing…" : "⬇️ Pull from Gist"}
-                </button>
-                <button onClick={pushToGist} disabled={githubSyncing || !githubToken.trim()} style={{ ...btnS("#238636"), opacity: githubSyncing || !githubToken.trim() ? 0.5 : 1 }}>
-                  {githubSyncing ? "⏳ Syncing…" : "⬆️ Push to Gist"}
-                </button>
-              </div>
-              {/^[0-9a-f]+$/i.test(gistId.trim()) && (
-                <div style={{ fontSize: 11, color: t2 }}>
-                  Gist: <a href={`https://gist.github.com/${gistId.trim()}`} target="_blank" rel="noopener noreferrer" style={{ color: ac }}>{gistId.trim()}</a>
-                </div>
-              )}
-            </div>
+              );
+            })()}
 
             {/* RESET */}
             <div style={{ ...crd }}>
