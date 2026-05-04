@@ -41,6 +41,7 @@ const ACTIVITY_KEY = "spacerep-activity-v1";
 const SHARED_PFX = "spacerep-shared-deck:";
 const PROFILE_KEY = "spacerep-profile-v1";
 const PROGRESS_KEY = "spacerep-progress-v1";
+const GITHUB_KEY = "spacerep-github-v1";
 
 /* ─── Storage ─── */
 async function ld(key, fb, shared = false) {
@@ -503,6 +504,10 @@ export default function App() {
   const [newDeckName, setNewDeckName] = useState("");
   const [allDecks, setAllDecks] = useState([...DECKS]);
   const [syncing, setSyncing] = useState(false);
+  const [githubToken, setGithubToken] = useState("");
+  const [gistId, setGistId] = useState("");
+  const [githubSyncing, setGithubSyncing] = useState(false);
+  const [showToken, setShowToken] = useState(false);
   const fileInputRef = useRef(null);
   const backupFileRef = useRef(null);
 
@@ -584,8 +589,10 @@ export default function App() {
       const a = await ld(ACTIVITY_KEY, {});
       const p = await ld(PROFILE_KEY, { name: "", id: "" });
       const prog = await ld(PROGRESS_KEY, {});
+      const gh = await ld(GITHUB_KEY, { token: "", gistId: "" });
       if (!p.id) p.id = Math.random().toString(36).slice(2, 10);
       setMyCards(c); setActivity(a); setProfile(p); setSharedProgress(prog);
+      setGithubToken(gh.token || ""); setGistId(gh.gistId || "");
       const ds = new Set([...DECKS]);
       c.forEach(x => ds.add(x.deck));
       setAllDecks([...ds]);
@@ -599,6 +606,7 @@ export default function App() {
   useEffect(() => { if (!loading) sv(ACTIVITY_KEY, activity); }, [activity, loading]);
   useEffect(() => { if (!loading) sv(PROFILE_KEY, profile); }, [profile, loading]);
   useEffect(() => { if (!loading) sv(PROGRESS_KEY, sharedProgress); }, [sharedProgress, loading]);
+  useEffect(() => { if (!loading) sv(GITHUB_KEY, { token: githubToken, gistId }); }, [githubToken, gistId, loading]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2500); };
   const logActivity = () => { const k = toDS(Date.now()); setActivity(p => ({ ...p, [k]: (p[k] || 0) + 1 })); };
@@ -810,6 +818,61 @@ export default function App() {
     if (!confirm("Delete ALL personal cards and progress?")) return;
     setMyCards([]); setActivity({}); setSharedProgress({});
     setAllDecks([...DECKS]); setDeck(null); showToast("🔄 Reset");
+  };
+
+  const pullFromGist = async () => {
+    if (!gistId.trim()) { showToast("❌ Enter a Gist ID first"); return; }
+    setGithubSyncing(true);
+    try {
+      const headers = githubToken ? { Authorization: `Bearer ${githubToken}` } : {};
+      const res = await fetch(`https://api.github.com/gists/${gistId.trim()}`, { headers });
+      if (!res.ok) throw new Error(`GitHub ${res.status}`);
+      const data = await res.json();
+      const shared = { ...sharedCards };
+      for (const [filename, file] of Object.entries(data.files)) {
+        if (filename.endsWith(".json")) {
+          const deckName = filename.slice(0, -5);
+          const cards = JSON.parse(file.content || "[]");
+          shared[deckName] = cards;
+          await sv(SHARED_PFX + deckName, cards, true);
+        }
+      }
+      setSharedCards(shared);
+      showToast("🐙 Pulled from Gist!");
+    } catch (err) {
+      showToast("❌ " + err.message);
+    } finally {
+      setGithubSyncing(false);
+    }
+  };
+
+  const pushToGist = async () => {
+    if (!githubToken.trim()) { showToast("❌ Enter a GitHub token first"); return; }
+    setGithubSyncing(true);
+    try {
+      const files = {};
+      for (const d of allDecks) {
+        const cards = sharedCards[d] || [];
+        if (cards.length > 0) files[`${d}.json`] = { content: JSON.stringify(cards, null, 2) };
+      }
+      if (Object.keys(files).length === 0) { showToast("❌ No shared cards to push"); setGithubSyncing(false); return; }
+      const body = { description: "SpaceRep shared flashcard decks", public: false, files };
+      const url = gistId.trim() ? `https://api.github.com/gists/${gistId.trim()}` : "https://api.github.com/gists";
+      const method = gistId.trim() ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${githubToken.trim()}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error(`GitHub ${res.status}`);
+      const data = await res.json();
+      if (!gistId.trim()) setGistId(data.id);
+      showToast("🐙 Pushed to Gist!");
+    } catch (err) {
+      showToast("❌ " + err.message);
+    } finally {
+      setGithubSyncing(false);
+    }
   };
 
   /* ─── Styles ─── */
@@ -1177,6 +1240,48 @@ export default function App() {
                 <span style={{ fontSize: 11, color: t2 }}>Shown on shared cards</span>
               </div>
             </div>
+
+            {/* GITHUB GIST STORE */}
+            {(() => {
+              const safeGistId = /^[0-9a-f]{32}$/i.test(gistId.trim()) ? gistId.trim() : "";
+              return (
+                <div style={{ ...crd, marginBottom: 16, borderColor: "#30363d" }}>
+                  <h3 style={{ margin: "0 0 4px", fontSize: 15, color: "#8b949e" }}>🐙 GitHub Gist Store</h3>
+                  <p style={{ color: t2, fontSize: 12, margin: "0 0 12px" }}>Sync shared decks to a GitHub Gist. Token (gist scope) is required to push; pull from a public Gist works without one.</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <input
+                        value={githubToken}
+                        onChange={e => setGithubToken(e.target.value)}
+                        placeholder="GitHub Personal Access Token (gist scope)"
+                        type={showToken ? "text" : "password"}
+                        style={{ flex: 1, background: sf2, color: t1, border: `1px solid ${bd}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none", fontFamily: "monospace" }}
+                      />
+                      <button onClick={() => setShowToken(v => !v)} style={{ ...btnS(sf2), border: `1px solid ${bd}`, color: t2, padding: "8px 10px", fontSize: 13 }}>{showToken ? "🙈" : "👁️"}</button>
+                    </div>
+                    <input
+                      value={gistId}
+                      onChange={e => setGistId(e.target.value)}
+                      placeholder="Gist ID (leave blank to create new on push)"
+                      style={{ background: sf2, color: t1, border: `1px solid ${bd}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none", fontFamily: "monospace" }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: safeGistId ? 10 : 0 }}>
+                    <button onClick={pullFromGist} disabled={githubSyncing || !gistId.trim()} style={{ ...btnS("#1f6feb"), opacity: githubSyncing || !gistId.trim() ? 0.5 : 1 }}>
+                      {githubSyncing ? "⏳ Syncing…" : "⬇️ Pull from Gist"}
+                    </button>
+                    <button onClick={pushToGist} disabled={githubSyncing || !githubToken.trim()} style={{ ...btnS("#238636"), opacity: githubSyncing || !githubToken.trim() ? 0.5 : 1 }}>
+                      {githubSyncing ? "⏳ Syncing…" : "⬆️ Push to Gist"}
+                    </button>
+                  </div>
+                  {safeGistId && (
+                    <div style={{ fontSize: 11, color: t2 }}>
+                      Gist: <a href={`https://gist.github.com/${safeGistId}`} target="_blank" rel="noopener noreferrer" style={{ color: ac }}>{safeGistId}</a>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* RESET */}
             <div style={{ ...crd }}>
